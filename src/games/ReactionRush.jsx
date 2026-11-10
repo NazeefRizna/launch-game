@@ -1,91 +1,127 @@
-import { useEffect, useState } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Target, Clock, RotateCcw } from "lucide-react";
+import { Target, Clock, Zap } from "lucide-react";
+
+const GAME_TIME = 15;
+const TARGET_COUNT = 10;
+
+function getRandomPosition() {
+  return {
+    x: Math.random() * 80 + 5,
+    y: Math.random() * 75 + 5,
+  };
+}
 
 export default function ReactionRush({ onComplete }) {
   const [score, setScore] = useState(0);
-  const [time, setTime] = useState(15);
+  const [time, setTime] = useState(GAME_TIME);
   const [finished, setFinished] = useState(false);
+  const [position, setPosition] = useState(getRandomPosition());
 
   useEffect(() => {
-    if (finished || score >= 10) return;
+    if (finished) return;
 
-    if (time === 0) {
+    if (time <= 0) {
       setFinished(true);
       return;
     }
 
     const timer = setTimeout(() => {
-      setTime((t) => t - 1);
+      setTime((previous) => previous - 1);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [time, finished, score]);
+  }, [time, finished]);
 
   useEffect(() => {
-    if (score >= 10) {
+    if (score >= TARGET_COUNT) {
       setFinished(true);
       onComplete();
     }
   }, [score, onComplete]);
 
-  const restart = () => {
+  const handleTargetClick = () => {
+    if (finished) return;
+
+    setScore((previous) => previous + 1);
+    setPosition(getRandomPosition());
+  };
+
+  const retry = () => {
     setScore(0);
-    setTime(15);
+    setTime(GAME_TIME);
     setFinished(false);
+    setPosition(getRandomPosition());
   };
 
   return (
-    <div className="text-center">
-      <div className="flex justify-center gap-8 mb-8">
-        <div>
-          <p className="text-slate-400 text-sm">TARGETS</p>
-          <p className="text-3xl font-bold">{score}/10</p>
+    <div className="w-full max-w-2xl mx-auto text-center">
+
+      <div className="flex justify-between mb-8">
+        <div className="flex items-center gap-2 text-blue-300">
+          <Target size={18} />
+          <span className="font-bold">{score}/{TARGET_COUNT}</span>
         </div>
 
-        <div>
-          <p className="text-slate-400 text-sm">TIME LEFT</p>
-          <p className="text-3xl font-bold text-cyan-400">
-            {time}s
-          </p>
+        <div className="flex items-center gap-2 text-purple-300">
+          <Clock size={18} />
+          <span className="font-bold">{time}s</span>
         </div>
       </div>
 
-      {!finished ? (
-        <div className="min-h-64 flex items-center justify-center">
-          <motion.button
-            whileTap={{ scale: 0.8 }}
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ repeat: Infinity, duration: 1.2 }}
-            onClick={() => setScore((s) => s + 1)}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-xl shadow-blue-500/30 flex items-center justify-center"
-          >
-            <Target size={55} className="text-white" />
-          </motion.button>
-        </div>
-      ) : score >= 10 ? (
-        <div className="py-12">
-          <h2 className="text-3xl font-bold text-green-400">
-            Excellent reflexes!
-          </h2>
-          <p className="text-slate-400 mt-3">
-            You've completed the challenge.
-          </p>
+      {finished ? (
+        <div className="py-16">
+          {score >= TARGET_COUNT ? (
+            <h2 className="text-3xl font-black text-green-400">
+              Challenge Completed!
+            </h2>
+          ) : (
+            <>
+              <h2 className="text-3xl font-black text-red-400">
+                Time's Up!
+              </h2>
+
+              <p className="text-slate-400 mt-3">
+                You scored {score} out of {TARGET_COUNT}.
+              </p>
+
+              <button
+                onClick={retry}
+                className="mt-6 px-6 py-3 rounded-xl bg-blue-500 text-white font-bold"
+              >
+                Try Again
+              </button>
+            </>
+          )}
         </div>
       ) : (
-        <div className="py-12">
-          <h2 className="text-2xl font-bold">Time's up!</h2>
-          <p className="text-slate-400 mt-3">
-            You reached {score} targets. Try again!
+        <>
+          <p className="text-slate-400 mb-5">
+            Hit the moving target 10 times before time runs out!
           </p>
 
-          <button
-            onClick={restart}
-            className="mt-6 px-6 py-3 bg-blue-600 rounded-xl inline-flex gap-2"
-          >
-            <RotateCcw size={18} /> Retry
-          </button>
-        </div>
+          <div className="relative w-full h-[350px] bg-slate-900/70 border border-white/10 rounded-2xl overflow-hidden">
+
+            <motion.button
+              key={score}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+                left: `${position.x}%`,
+                top: `${position.y}%`,
+              }}
+              transition={{ duration: 0.18 }}
+              onClick={handleTargetClick}
+              className="absolute -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-blue-500 hover:bg-cyan-400 shadow-lg shadow-blue-500/40 flex items-center justify-center text-white"
+              aria-label="Hit target"
+            >
+              <Zap size={23} fill="currentColor" />
+            </motion.button>
+
+          </div>
+        </>
       )}
     </div>
   );
