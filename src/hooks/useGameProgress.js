@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "launch-game-progress";
@@ -21,22 +22,22 @@ export default function useGameProgress() {
   }, [completedLevels]);
 
   const completeLevel = useCallback((level) => {
-  setCompletedLevels((previous) =>
-    previous.includes(level)
-      ? previous
-      : [...previous, level]
-  );
-}, []);
+    setCompletedLevels((previous) =>
+      previous.includes(level)
+        ? previous
+        : [...previous, level]
+    );
+  }, []);
 
   const isUnlocked = (level) => {
     if (level === 1) return true;
     return completedLevels.includes(level - 1);
   };
 
-  const handleReset = () => {
-  localStorage.clear();
-  window.location.reload();
-};
+  const resetProgress = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.href = "/";
+  };
 
   return {
     completedLevels,
