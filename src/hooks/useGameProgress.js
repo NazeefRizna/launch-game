@@ -33,10 +33,10 @@ export default function useGameProgress() {
     return completedLevels.includes(level - 1);
   };
 
-  const resetProgress = () => {
-    setCompletedLevels([]);
-    localStorage.removeItem(STORAGE_KEY);
-  };
+  const handleReset = () => {
+  localStorage.clear();
+  window.location.reload();
+};
 
   return {
     completedLevels,
