@@ -1,16 +1,24 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 
 const symbols = ["🚀", "⚡", "🌟", "🎯"];
 
 function createCards() {
-  return [...symbols, ...symbols]
-    .sort(() => Math.random() - 0.5)
-    .map((symbol, index) => ({
-      id: index,
-      symbol,
-      matched: false,
-    }));
+  const shuffled = [...symbols, ...symbols];
+
+  // Fisher-Yates shuffle
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.map((symbol, index) => ({
+    id: index,
+    symbol,
+    matched: false,
+  }));
 }
 
 export default function MemoryMatch({ onComplete }) {
@@ -19,18 +27,24 @@ export default function MemoryMatch({ onComplete }) {
   const [moves, setMoves] = useState(0);
   const [locked, setLocked] = useState(false);
 
+  const completedRef = useRef(false);
+
   useEffect(() => {
-    if (cards.every((card) => card.matched)) {
+    if (
+      cards.every((card) => card.matched) &&
+      !completedRef.current
+    ) {
+      completedRef.current = true;
       onComplete();
     }
   }, [cards, onComplete]);
 
   const selectCard = (id) => {
-    if (locked) return;
+    if (locked || completedRef.current) return;
 
     const card = cards.find((c) => c.id === id);
 
-    if (card.matched || selected.includes(id)) return;
+    if (!card || card.matched || selected.includes(id)) return;
 
     if (selected.length === 0) {
       setSelected([id]);
@@ -63,6 +77,7 @@ export default function MemoryMatch({ onComplete }) {
   };
 
   const restart = () => {
+    completedRef.current = false;
     setCards(createCards());
     setSelected([]);
     setMoves(0);
@@ -71,6 +86,10 @@ export default function MemoryMatch({ onComplete }) {
 
   return (
     <div className="text-center max-w-md mx-auto">
+      <h2 className="text-2xl font-black text-white mb-2">
+        Memory Match
+      </h2>
+
       <p className="text-slate-400 mb-2">
         Find all four matching pairs.
       </p>
@@ -89,12 +108,13 @@ export default function MemoryMatch({ onComplete }) {
               key={card.id}
               whileTap={{ scale: 0.9 }}
               onClick={() => selectCard(card.id)}
+              disabled={locked || card.matched || visible}
               className={`aspect-square rounded-2xl text-3xl flex items-center justify-center border transition ${
                 card.matched
                   ? "bg-green-500/20 border-green-400"
                   : visible
                   ? "bg-blue-500/30 border-blue-400"
-                  : "bg-white/10 border-white/10"
+                  : "bg-white/10 border-white/10 hover:bg-white/20"
               }`}
             >
               {visible ? card.symbol : "?"}
@@ -105,7 +125,7 @@ export default function MemoryMatch({ onComplete }) {
 
       <button
         onClick={restart}
-        className="mt-7 text-sm text-slate-400 hover:text-white"
+        className="mt-7 text-sm text-slate-400 hover:text-white transition"
       >
         Restart game
       </button>

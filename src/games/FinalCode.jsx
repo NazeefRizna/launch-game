@@ -1,106 +1,234 @@
-import { useState, useEffect } from "react";
-import { Lock, Delete } from "lucide-react";
 
-const SECRET_CODE = "4826";
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+const CODE_LENGTH = 4;
+const MAX_ATTEMPTS = 6;
+
+function generateSecretCode() {
+  return Array.from(
+    { length: CODE_LENGTH },
+    () => Math.floor(Math.random() * 10)
+  ).join("");
+}
+
+function checkGuess(guess, secretCode) {
+  const result = Array(CODE_LENGTH).fill("wrong");
+  const remaining = secretCode.split("");
+
+  // First pass: identify exact matches
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    if (guess[i] === secretCode[i]) {
+      result[i] = "correct";
+      remaining[i] = null;
+    }
+  }
+
+  // Second pass: identify correct digits in wrong positions
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    if (result[i] === "correct") continue;
+
+    const index = remaining.indexOf(guess[i]);
+
+    if (index !== -1) {
+      result[i] = "present";
+      remaining[index] = null;
+    }
+  }
+
+  return result;
+}
+
+const colors = {
+  correct: "bg-green-500 border-green-400",
+  present: "bg-yellow-500 border-yellow-400",
+  wrong: "bg-red-600 border-red-500",
+};
 
 export default function FinalCode({ onComplete }) {
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
-  const [attempts, setAttempts] = useState(0);
+  const [secretCode, setSecretCode] = useState(generateSecretCode);
 
-  useEffect(() => {
-    if (code.length === 4 && code === SECRET_CODE) {
-      setMessage("Code unlocked!");
-      onComplete();
+  const [guess, setGuess] = useState("");
+  const [attempts, setAttempts] = useState([]);
+  const [won, setWon] = useState(false);
+  const [lost, setLost] = useState(false);
+
+  const submitGuess = () => {
+    if (
+      guess.length !== CODE_LENGTH ||
+      won ||
+      lost
+    ) {
+      return;
     }
-  }, [code, onComplete]);
 
-  const addDigit = (digit) => {
-    if (code.length >= 4) return;
+    const result = checkGuess(guess, secretCode);
 
-    const next = code + digit;
-    setCode(next);
+    const newAttempts = [
+      ...attempts,
+      { guess, result },
+    ];
 
-    if (next.length === 4 && next !== SECRET_CODE) {
-      setAttempts((a) => a + 1);
-      setMessage("Incorrect code. Try again!");
-    } else {
-      setMessage("");
+    setAttempts(newAttempts);
+    setGuess("");
+
+    if (guess === secretCode) {
+      setWon(true);
+      onComplete();
+    } else if (newAttempts.length >= MAX_ATTEMPTS) {
+      setLost(true);
     }
   };
 
-  const clearCode = () => {
-    setCode("");
-    setMessage("");
+  const handleInput = (value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    if (value.length <= CODE_LENGTH) {
+      setGuess(value);
+    }
+  };
+
+  const retry = () => {
+    setSecretCode(generateSecretCode());
+    setGuess("");
+    setAttempts([]);
+    setWon(false);
+    setLost(false);
   };
 
   return (
-    <div className="max-w-sm mx-auto text-center">
-      <div className="w-20 h-20 mx-auto rounded-2xl bg-purple-500/20 flex items-center justify-center mb-5">
-        <Lock size={38} className="text-purple-400" />
-      </div>
+    <div className="max-w-md mx-auto w-full text-center">
+
+      <h2 className="text-2xl font-black text-white mb-2">
+        Crack the Final Code
+      </h2>
 
       <p className="text-slate-400 mb-6">
-        Enter the four-digit secret code to unlock the final stage.
+        Find the 4-digit secret code.
+        You have {MAX_ATTEMPTS} attempts.
       </p>
 
-      <div className="flex justify-center gap-3 mb-5">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="w-14 h-16 rounded-xl border border-white/20 bg-white/5 flex items-center justify-center text-2xl font-bold"
+      {/* COLOUR LEGEND */}
+      <div className="flex justify-center flex-wrap gap-x-3 gap-y-2 mb-6">
+
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <span className="text-xs text-slate-400">
+            Correct position
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <span className="text-xs text-slate-400">
+            Wrong position
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-600" />
+          <span className="text-xs text-slate-400">
+            Not in code
+          </span>
+        </div>
+
+      </div>
+
+      {/* PREVIOUS ATTEMPTS */}
+      <div className="space-y-3 mb-7">
+
+        {attempts.map((attempt, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center gap-3"
           >
-            {code[i] ? "●" : ""}
+            {attempt.guess.split("").map((digit, i) => (
+              <div
+                key={i}
+                className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-black text-white ${colors[attempt.result[i]]}`}
+              >
+                {digit}
+              </div>
+            ))}
+          </motion.div>
+        ))}
+
+      </div>
+
+      {/* INPUT */}
+      {!won && !lost && (
+        <>
+          <p className="text-slate-400 text-sm mb-3">
+            Attempt {attempts.length + 1} of {MAX_ATTEMPTS}
+          </p>
+
+          <div className="flex justify-center gap-3 mb-5">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={CODE_LENGTH}
+              value={guess}
+              onChange={(e) => handleInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitGuess();
+              }}
+              placeholder="0000"
+              className="w-48 text-center text-3xl tracking-[0.5em] font-black bg-slate-900 border border-white/20 rounded-xl p-4 text-white outline-none focus:border-cyan-400"
+            />
           </div>
-        ))}
-      </div>
 
-      <p className="text-xs text-slate-500 mb-6">
-        Attempts: {attempts}
-      </p>
-
-      <div className="grid grid-cols-3 gap-3">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
           <button
-            key={digit}
-            onClick={() => addDigit(digit)}
-            className="h-14 rounded-xl bg-white/10 hover:bg-blue-500/40 text-xl font-semibold transition"
+            onClick={submitGuess}
+            disabled={guess.length !== CODE_LENGTH}
+            className="px-8 py-3 rounded-xl bg-blue-500 text-white font-bold disabled:opacity-40 hover:bg-blue-400 transition"
           >
-            {digit}
+            Check Code
           </button>
-        ))}
-
-        <button
-          onClick={clearCode}
-          className="h-14 rounded-xl bg-white/10 flex items-center justify-center"
-        >
-          <Delete size={20} />
-        </button>
-
-        <button
-          onClick={() => addDigit("0")}
-          className="h-14 rounded-xl bg-white/10 hover:bg-blue-500/40 text-xl"
-        >
-          0
-        </button>
-
-        <button
-          onClick={clearCode}
-          className="h-14 rounded-xl bg-white/10"
-        >
-          C
-        </button>
-      </div>
-
-      {message && (
-        <p className={`mt-5 text-sm ${
-          code === SECRET_CODE
-            ? "text-green-400"
-            : "text-red-400"
-        }`}>
-          {message}
-        </p>
+        </>
       )}
+
+      {/* SUCCESS */}
+      {won && (
+        <div className="mt-6">
+
+          <h3 className="text-3xl font-black text-green-400">
+            Code Cracked!
+          </h3>
+
+          <p className="text-slate-400 mt-2">
+            Congratulations! You completed all five challenges.
+          </p>
+
+        </div>
+      )}
+
+      {/* FAILURE */}
+      {lost && (
+        <div className="mt-6">
+
+          <h3 className="text-2xl font-black text-red-400">
+            Out of Attempts!
+          </h3>
+
+          <p className="text-slate-400 mt-2">
+            The secret code was{" "}
+            <span className="text-white font-bold tracking-widest">
+              {secretCode}
+            </span>
+          </p>
+
+          <button
+            onClick={retry}
+            className="mt-5 px-6 py-3 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-400 transition"
+          >
+            Try Again
+          </button>
+
+        </div>
+      )}
+
     </div>
   );
 }

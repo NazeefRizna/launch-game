@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Target, Clock, Zap } from "lucide-react";
 
-const GAME_TIME = 15;
+const GAME_TIME = 11;
 const TARGET_COUNT = 10;
 
 function getRandomPosition() {
