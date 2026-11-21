@@ -1,14 +1,12 @@
+
 import { motion } from "framer-motion";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   Trophy,
-  Globe,
   Sparkles,
-  ArrowRight,
 } from "lucide-react";
 
 export default function Victory({ isFinished }) {
-  const navigate = useNavigate();
 
   if (!isFinished) {
     return <Navigate to="/" replace />;
@@ -25,9 +23,16 @@ export default function Victory({ isFinished }) {
         transition={{ duration: 0.7 }}
         className="relative max-w-xl w-full text-center"
       >
+
         <motion.div
-          animate={{ rotate: [0, -10, 10, 0], y: [0, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 3 }}
+          animate={{
+            rotate: [0, -10, 10, 0],
+            y: [0, -10, 0],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 3,
+          }}
           className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-2xl shadow-yellow-500/20"
         >
           <Trophy size={65} className="text-white" />
@@ -58,17 +63,14 @@ export default function Victory({ isFinished }) {
           ))}
         </div>
 
-        <button
-          onClick={() => navigate("/website")}
-          className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition shadow-xl shadow-green-500/20"
-        >
-          Explore the Website
-          <ArrowRight />
-        </button>
+        <p className="text-green-400 font-semibold animate-pulse">
+          Redirecting you to the launch website...
+        </p>
 
         <p className="text-xs text-slate-600 mt-6">
           YOUR NEXT EXPERIENCE STARTS HERE
         </p>
+
       </motion.div>
     </main>
   );
