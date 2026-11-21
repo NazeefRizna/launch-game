@@ -69,19 +69,21 @@ const instructions = {
     icon: RotateCcw,
   },
 
-  3: {
-    subtitle: "Put your problem-solving skills to the test.",
-    objective: "Arrange the numbered tiles in the correct order from 1 to 8.",
-    rules: [
-      "Click a tile next to the empty space to move it.",
-      "Arrange the numbers in ascending order.",
-      "The empty space should be at the bottom-right corner.",
-      "Complete the arrangement to win.",
-    ],
-    tip: "Think a few moves ahead instead of moving tiles randomly.",
-    difficulty: "Logic & Strategy",
-    icon: Hash,
-  },
+  
+3: {
+  subtitle: "Test your memory with a colourful challenge.",
+  objective: "Watch the colour sequence and repeat it in the exact same order.",
+  rules: [
+    "Watch the colours light up carefully.",
+    "Tap the colours in the same order.",
+    "Each round adds one more colour to remember.",
+    "Complete all 5 rounds to win.",
+  ],
+  tip: "Focus on the sequence rather than rushing your answers.",
+  difficulty: "Memory & Focus",
+  icon: Hash,
+},
+
 
   4: {
     subtitle: "Follow the directions without losing focus.",
